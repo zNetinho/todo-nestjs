@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id         String  @id @default(cuid())
+  email      String  @unique
+  first_name String
+  last_name  String
+  avatar     String?
+  password   String
+  tasks      Task[]  @relation("UserToTasks") // Relação para acessar todas as tarefas deste usuário
+}
+
+model Task {
+  id            Int         @id @unique @default(autoincrement())
+  nome          String
+  objetivo      String
+  status        task_status @default(BACKLOG)
+  responsavel   User        @relation("UserToTasks", fields: [responsavelId], references: [id])
+  responsavelId String // Campo que referencia o ID do usuário responsável
+  concluido     Boolean
+  criado_em     String
+  alterado_em   String
+}
+
+enum task_status {
+  BACKLOG
+  ANDAMENTO
+  VALIDACAO
+  CONCLUIDA
+}
