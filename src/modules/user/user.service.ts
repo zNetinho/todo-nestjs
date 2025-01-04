@@ -10,6 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { patternEmailIsValid } from 'src/shared/constants/regex_patterns';
 
 @Injectable()
 export class UserService {
@@ -106,9 +107,16 @@ export class UserService {
   }
 
   static validateData({ first_name, last_name, email, password }) {
+    // [] TODO: Criar regra de negocio para validar email já existentes.
     if (!email || !password || !first_name || !last_name) {
       return 'Todos os campos são obrigatórios';
     }
+    if (email) {
+      if (!patternEmailIsValid.test(email)) {
+        return 'Email inválido';
+      }
+    }
+
     return true;
   }
 

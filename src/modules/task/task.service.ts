@@ -16,12 +16,14 @@ import { patternNoScript } from 'src/shared/constants/regex_patterns';
 import { DateFormatter } from 'src/shared/formatters/date.formatter';
 import { CreateTaskDto } from './dto/task.dto';
 import { Task } from './entities/task.entity';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class TaskService {
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheService: Cache,
+    private readonly userService: UserService,
   ) {}
 
   formatterDate = DateFormatter;
@@ -37,13 +39,6 @@ export class TaskService {
   async create(createTaskDto: CreateTaskDto) {
     const { nome, objetivo, responsavelId } = createTaskDto;
     await this.validaDataTask(createTaskDto);
-    console.log(nome, objetivo);
-    if (nome === undefined || objetivo === undefined) {
-      return {
-        message: 'Erro nome ou objetivo da tarefa é obrigatório',
-        status: 404,
-      };
-    }
     try {
       return await this.prisma.task.create({
         data: {
@@ -68,9 +63,7 @@ export class TaskService {
    */
   async validaDataTask(createTaskDto: CreateTaskDto) {
     const { nome, objetivo, responsavelId, concluido } = createTaskDto;
-    const user = await this.prisma.user.findUnique({
-      where: { id: responsavelId },
-    });
+    const user = await this.userService.findOne(responsavelId);
     if (
       !isNotEmpty(nome) ||
       !isNotEmpty(objetivo) ||
@@ -81,16 +74,7 @@ export class TaskService {
         'Algum dado é inválido, ou não foi informado',
       );
     }
-    // [] TODO: Criar regra de negócio para validar o objetivo da tarefa, nome e presença de tags script
-    const regexObjetivoMatch = objetivo.match(patternNoScript);
-    const regexNomeMatch = objetivo.match(patternNoScript);
-
-    if (
-      objetivo.includes('<script') ||
-      objetivo.includes('</script') ||
-      regexObjetivoMatch.length > 0 ||
-      regexNomeMatch.length > 0
-    ) {
+    if (patternNoScript.test(nome) || patternNoScript.test(objetivo)) {
       throw new BadRequestException(
         'Provavelmente o objetivo ou nome da tarefa possui tag HTML scripts',
       );

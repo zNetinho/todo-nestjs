@@ -31,8 +31,12 @@ export class TokenMiddleware implements NestMiddleware {
         // Verifica o token usando o service do modúlo Auth
         try {
           const autenticated = await this.AuthService.verifyToken(token);
-          console.log('autenticated', autenticated);
-
+          if (!autenticated) {
+            throw new UnauthorizedException({
+              message: 'Verifique suas credenciais e tente novamente',
+              statusCode: 401,
+            });
+          }
           // Se a verificação do token for bem-sucedida, continue a execução
         } catch (error) {
           // Verifica se o erro é do tipo TokenExpiredError

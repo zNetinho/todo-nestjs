@@ -62,14 +62,6 @@ export class TaskController {
    * or rejects with an error response if there is an issue.
    */
   async create(@Body() createTaskDto: CreateTaskDto, @Res() res: Response) {
-    // verify the object and props
-    // if (!createTaskDto || !createTaskDto.nome || !createTaskDto.objetivo) {
-    //   return res.status(400).json({
-    //     message: 'Erro: nome e objetivo da tarefa são obrigatórios',
-    //     status: 400,
-    //   });
-    // }
-
     // Call the create method of the task service with the createTaskDto object
     const task = await this.taskService.create(createTaskDto);
 
@@ -89,23 +81,23 @@ export class TaskController {
     }
   }
 
-  // Aplica o cache dos objetos para todas as rotas get, usando URL como key
+  // Apply object cache for route get, using URL as key
   @UseInterceptors(CacheInterceptor)
   @CacheKey('tasks')
-  @CacheTTL(0)
+  @CacheTTL(60 * 1000 * 30)
   @Get()
   /**
-   * Retorna todas as task com base nos filtros.
+   * Return all task with filters.
    *
-   * @param {number} page - O número da página.
-   * @param {number} perPage - O número de itens por página.
-   * @param {string} userId - O id do responsável.
-   * @return {Promise<PaginatedResult<Task>>} Devolve uma promisse com o resultado.
+   * @param {number} page - number of page.
+   * @param {number} perPage - number of itens.
+   * @param {string} userId - the id responsable.
+   * @return {Promise<PaginatedResult<Task>>} return a promise of all tasks.
    */
   async findAll(
-    @Query('page') page = 1, // O valor default é 1
-    @Query('perPage') perPage = 5, // O valor default do perPage é 5
-    @Query('userId') userId, // O ID do responsável para buscar todas as tarefas dele.
+    @Query('page') page = 1, // The value default is 1
+    @Query('perPage') perPage = 5, // The value default perPage is 5
+    @Query('userId') userId, // ID of Use for filter.
   ) {
     const results = await this.taskService.findAll({
       where: { responsavelId: userId }, // Filtra as tarefas pelo ID do responsável
@@ -117,7 +109,7 @@ export class TaskController {
   }
 
   @Get(':id')
-  @CacheTTL(60 * 1000 * 60)
+  @CacheTTL(60)
   async findOne(@Param('id') id: string) {
     const task = await this.taskService.findOne(+id);
     if (!task) {

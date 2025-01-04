@@ -2,17 +2,17 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Patch,
   Post,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  FileFieldsInterceptor,
-  NoFilesInterceptor,
-} from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UpdateSendfileDto } from './dto/update-sendfile.dto';
 import { SendfileService } from './sendfile.service';
 
@@ -28,7 +28,14 @@ export class SendfileController {
     ]),
   )
   upload(
-    @UploadedFiles()
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
+          new FileTypeValidator({ fileType: 'image/*' }),
+        ],
+      }),
+    )
     files: {
       file?: Express.Multer.File[];
       first_name?: string;

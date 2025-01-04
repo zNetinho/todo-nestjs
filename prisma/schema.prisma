@@ -9,13 +9,14 @@ datasource db {
 }
 
 model User {
-  id         String  @id @default(cuid())
-  email      String  @unique
-  first_name String
-  last_name  String
-  avatar     String?
-  password   String
-  tasks      Task[]  @relation("UserToTasks") // Relação para acessar todas as tarefas deste usuário
+  id           String         @id @default(cuid())
+  email        String         @unique
+  first_name   String
+  last_name    String
+  avatar       String?
+  password     String
+  tasks        Task[]         @relation("UserToTasks") // Relação para acessar todas as tarefas deste usuário
+  transactions Transactions[] @relation("UserToTransactions") // Relação para acessar todas as transações deste usuário
 }
 
 model Task {
@@ -25,7 +26,7 @@ model Task {
   status        task_status @default(BACKLOG)
   responsavel   User        @relation("UserToTasks", fields: [responsavelId], references: [id])
   responsavelId String // Campo que referencia o ID do usuário responsável
-  concluido     Boolean
+  concluido     Boolean     @default(false)
   criado_em     String
   alterado_em   String
 }
@@ -35,4 +36,30 @@ enum task_status {
   ANDAMENTO
   VALIDACAO
   CONCLUIDA
+}
+
+model Transactions {
+  id               String               @id @unique @default(cuid())
+  user_id          String
+  user             User                 @relation("UserToTransactions", fields: [user_id], references: [id])
+  name_bill        String
+  type_transaction type_transaction     @default(DEPOSIT)
+  category         category_transaction @default(NONSENSE)
+  amount           Float
+  description      String
+  proof_url        String?
+  location         String?
+  created_at       DateTime  @default(now())
+}
+
+enum type_transaction {
+  DEPOSIT
+  EXPENSE
+}
+
+enum category_transaction {
+  NONSENSE
+  ESSENTIAL
+  NECESSARY
+  MONTHLY_BILL
 }
