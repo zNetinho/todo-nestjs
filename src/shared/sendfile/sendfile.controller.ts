@@ -15,7 +15,9 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UpdateSendfileDto } from './dto/update-sendfile.dto';
 import { SendfileService } from './sendfile.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Send File')
 @Controller('sendfile')
 export class SendfileController {
   constructor(private readonly sendfileService: SendfileService) {}

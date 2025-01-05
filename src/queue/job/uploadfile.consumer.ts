@@ -22,7 +22,7 @@ class UploadFileConsumer extends WorkerHost {
   async process(job: any) {
     const { idUser, file } = job.data;
     console.log(job);
-    const urlAvatar = await this.sendFileService.upload(file);
+    const urlAvatar = await this.sendFileService.upload(file, 'avatars');
 
     const user = await this.prisma.user.findUnique({
       where: { id: idUser },

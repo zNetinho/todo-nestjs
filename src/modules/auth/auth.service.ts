@@ -22,7 +22,7 @@ export class AuthService {
    * @returns {Promise<any>} An object containing the signed-in user and a token.
    */
   async signIn(email: string, passwordHash: string): Promise<any> {
-    const user = await this.usersService.findOne(email);
+    const user = await this.usersService.findByEmail(email);
     if (!user) {
       return new NotFoundException('User not found');
     }

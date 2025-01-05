@@ -64,6 +64,7 @@ export class TaskService {
   async validaDataTask(createTaskDto: CreateTaskDto) {
     const { nome, objetivo, responsavelId, concluido } = createTaskDto;
     const user = await this.userService.findOne(responsavelId);
+    console.log(user);
     if (
       !isNotEmpty(nome) ||
       !isNotEmpty(objetivo) ||

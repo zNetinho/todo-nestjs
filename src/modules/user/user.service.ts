@@ -127,7 +127,12 @@ export class UserService {
     );
   }
 
-  async findOne(email: string): Promise<User | undefined> {
+  async findOne(id: string): Promise<User | undefined> {
+    const user = this.prisma.user.findFirst({ where: { id: id } });
+    return user;
+  }
+
+  async findByEmail(email: string): Promise<User | undefined> {
     const user = this.prisma.user.findFirst({ where: { email: email } });
     return user;
   }
