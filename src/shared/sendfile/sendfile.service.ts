@@ -16,10 +16,18 @@ export class SendfileService {
   }
 
   // @UseInterceptors(FileInterceptor('file'))
-  async upload(file: Express.Multer.File) {
+
+  /**
+   * Uploads a file to the specified bucket in Supabase storage.
+   *
+   * @param {Express.Multer.File} file - The file to be uploaded.
+   * @param {string} bucket - The name of the bucket where the file will be uploaded.
+   * @returns {Promise<string | void>} - The URL of the uploaded file if successful, otherwise logs the error.
+   */
+  async upload(file: Express.Multer.File, bucket: string) {
     console.log();
     const { data, error } = await this.supabase.storage
-      .from('avatars')
+      .from(bucket)
       .upload(`${file.originalname}`, file.buffer, {
         upsert: true,
       });

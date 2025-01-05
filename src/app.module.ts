@@ -12,6 +12,7 @@ import { TaskModule } from './modules/task/task.module';
 import { UserModule } from './modules/user/user.module';
 import { PrismaService } from './prisma/prisma.service';
 import { SendfileModule } from './shared/sendfile/sendfile.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { SendfileModule } from './shared/sendfile/sendfile.module';
     TaskModule,
     UserModule,
     AuthModule,
+    TransactionsModule,
     SendfileModule,
     BullModule.forRoot({
       connection: {
