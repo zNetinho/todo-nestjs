@@ -1,11 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { paginator, PrismaService, PaginateFunction, PaginatedResult } from 'src/prisma/prisma.service';
+import { Prisma, Transactions } from '@prisma/client';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { DateFormatter } from 'src/shared/formatters/date.formatter';
 
 @Injectable()
 export class TransactionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(CACHE_MANAGER) private cacheService: Cache, private readonly prisma: PrismaService) { }
 
   /**
    * Creates a new transaction.
@@ -25,6 +29,7 @@ export class TransactionsService {
       user_id,
       proof_url,
       location,
+      date,
     } = createTransactionDto;
     this.validateInfo(createTransactionDto);
 
@@ -36,41 +41,147 @@ export class TransactionsService {
       amount,
       description,
       created_at,
+      date,
       proof_url,
       location,
     );
 
     try {
       return await this.prisma.transactions.create({
-        data: transaction,
+        data: {
+          ...transaction,
+          date: DateFormatter.format(new Date(createTransactionDto.date)),
+        },
       });
     } catch (error) {
-      throw new Error(`Failed to create task: ${error.message}`);
+      throw new BadRequestException(`Failed to create task: ${error.message}`);
     }
   }
 
-  async findAll(): Promise<CreateTransactionDto[]> {
-    const transactions = await this.prisma.transactions.findMany();
-    if (!transactions) return [];
-    return transactions;
+  /**
+   * Retrieves all transactions from the database.
+   *
+   * @returns {Promise<CreateTransactionDto[]>} A promise that resolves to an array of CreateTransactionDto objects.
+   * If no transactions are found, an empty array is returned.
+   */
+  async findAll({
+    where,
+    orderBy,
+    page,
+    perPage,
+  }: {
+    where?: Prisma.UserWhereInput | any;
+    orderBy?: Prisma.UserOrderByWithRelationInput;
+    page?: number;
+    perPage?: number;
+  }): Promise<PaginatedResult<Transactions>> {
+    const itemChached = await this.cacheService.get('transactions'); // TODO: criar regra de cache das transações 0 = infinito.
+    if (itemChached || itemChached !== undefined) { 
+      return itemChached as PaginatedResult<Transactions>;
+    }
+    const paginate: PaginateFunction = paginator({ perPage: perPage });
+    const result: PaginatedResult<Transactions> = await paginate(
+      this.prisma.transactions,
+      {
+        where,
+        orderBy,
+      },
+      {
+        page,
+      },
+    );
+
+    return result as PaginatedResult<Transactions>;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} transaction`;
+  /**
+   * Finds a single transaction by its unique identifier.
+   * 
+   * @param {string} id - The unique identifier of the transaction to find.
+   * @returns {Promise<CreateTransactionDto>} A promise that resolves to the found transaction.
+   * @throws {NotFoundException} If no transaction is found with the given identifier.
+   */
+  async findOne(id: string): Promise<any> {
+    const transaction = await this.prisma.transactions.findUnique({
+      where: { id }
+    })
+    if (!transaction) {
+      throw new NotFoundException('Transaction not found');
+    }
+    return transaction;
   }
 
-  update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    return `This action updates a #${id} transaction`;
+  /**
+   * Updates a transaction with the given ID using the provided updateTransactionDto.
+   * 
+   * @param {string} id - The ID of the transaction to update.
+   * @param {UpdateTransactionDto} updateTransactionDto - The data transfer object containing the updated transaction information.
+   * @returns {Promise<Transactions>} - A promise that resolves to the updated transaction.
+   * @throws {Error} - Throws an error if the update operation fails.
+   */
+  async update(id: string, updateTransactionDto: UpdateTransactionDto): Promise<Transactions> {
+    await this.validateInfo(updateTransactionDto)
+    try {
+      return await this.prisma.transactions.update({
+        where: { id },
+        data: {
+          ...updateTransactionDto,
+          date: DateFormatter.format(new Date(updateTransactionDto.date))
+        }
+      })
+    } catch (error) {
+      throw new Error(`Failed to update task: ${error.message}`);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} transaction`;
+  /**
+   * Removes a transaction by its ID.
+   * 
+   * @param {string} id - The ID of the transaction to be removed.
+   * @returns {Promise<CreateTransactionDto>} - The removed transaction data.
+   * @throws {NotFoundException} - If the transaction with the given ID is not found.
+   */
+  async remove(id: string): Promise<any> {
+    const transactionExclude = await this.prisma.transactions.delete({
+      where: { id }
+    })
+
+    if (!transactionExclude) {
+      throw new NotFoundException('Transaction for exclude not found')
+    }
+
+    return transactionExclude;
   }
 
-  async validateInfo(transaction: CreateTransactionDto) {
+  refreshTheData() {
+
+  }
+
+  /**
+   * Validates the information of a transaction.
+   * 
+   * @param {CreateTransactionDto | UpdateTransactionDto} transaction - The transaction data to validate.
+   * @returns {Promise<boolean>} - Returns false if validation passes, otherwise throws a BadRequestException.
+   * 
+   * @throws {BadRequestException} - If user_id is missing or not a string.
+   * @throws {BadRequestException} - If user is not found.
+   * @throws {BadRequestException} - If name_bill is missing, not a string, or less than 3 characters.
+   * @throws {BadRequestException} - If description is missing, not a string, or less than 3 characters.
+   * @throws {BadRequestException} - If amount is not a positive number.
+   * @throws {BadRequestException} - If type_transaction is not "DEPOSIT" or "EXPENSE".
+   */
+  async validateInfo(transaction: CreateTransactionDto | UpdateTransactionDto) {
     const { name_bill, amount, type_transaction, description, user_id } =
       transaction;
 
+    const user = await this.prisma.user.findUnique({ where: { id: user_id } })
+
+    if (!user_id || typeof user_id !== 'string') {
+      throw new BadRequestException('User id is required and must be a string');
+    }
+    if (user === null || user === undefined) {
+      throw new BadRequestException('User not found');
+    }
     if (!name_bill || typeof name_bill !== 'string' || name_bill.length < 3) {
       throw new BadRequestException(
         'Name of bill is required, must be a string and high than 3 characters',
@@ -94,10 +205,6 @@ export class TransactionsService {
       throw new BadRequestException(
         'Type is required and must be either "DEPOSIT" or "EXPENSE"',
       );
-    }
-
-    if (!user_id || typeof user_id !== 'string') {
-      throw new BadRequestException('User id is required and must be a string');
     }
 
     return false;

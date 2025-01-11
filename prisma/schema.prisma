@@ -49,6 +49,7 @@ model Transactions {
   description      String
   proof_url        String?
   location         String?
+  date             String
   created_at       DateTime  @default(now())
 }
 
