@@ -74,14 +74,28 @@ export class UserService {
         },
       });
       if (data) {
-        console.log();
         if (file) {
-          this.uploadConsumer.process({
+          const urlAvatar = await this.uploadConsumer.process({
             data: {
               idUser: data.id,
               file: file,
+              bucket: 'avatars',
             },
           });
+          if (urlAvatar) {
+            try {
+              await this.prisma.user.update({
+                where: {
+                  id: data.id,
+                },
+                data: {
+                  avatar: urlAvatar,
+                },
+              });
+            } catch (error) {
+              console.log(error);
+            }
+          }
         }
         this.mailSend.process({
           data: {
