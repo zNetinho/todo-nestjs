@@ -19,34 +19,10 @@ class UploadFileConsumer extends WorkerHost {
       `Processing job ${job.id} of type ${job.name} with data ${job.data}...`,
     );
   }
-  async process(job: any) {
-    const { idUser, file } = job.data;
-    console.log(job);
-    const urlAvatar = await this.sendFileService.upload(file, 'avatars');
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: idUser },
-    });
-    console.log('Usuário:', idUser);
-
-    if (!user) {
-      throw new Error(`User with id ${idUser} not found`);
-    }
-    try {
-      await this.prisma.user.update({
-        where: {
-          id: idUser,
-        },
-        data: {
-          avatar: urlAvatar,
-        },
-      });
-    } catch (error) {
-      console.log(error);
-    }
-
-    console.log('file', file);
-    return 'file uploaded';
+  async process(job: { data: { idUser: string; file: any; bucket: string } }) {
+    const { file, bucket } = job.data;
+    const urlFileUploaded = await this.sendFileService.upload(file, bucket);
+    return urlFileUploaded;
   }
 }
 

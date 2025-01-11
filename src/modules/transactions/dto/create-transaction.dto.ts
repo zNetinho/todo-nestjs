@@ -1,3 +1,6 @@
+import { IsDateString } from "class-validator";
+import { DateFormatter } from "src/shared/formatters/date.formatter";
+
 export class CreateTransactionDto {
   id: string;
   user_id: string;
@@ -6,10 +9,11 @@ export class CreateTransactionDto {
   category: 'NONSENSE' | 'ESSENTIAL' | 'NECESSARY' | 'MONTHLY_BILL';
   amount: number;
   description: string;
+  created_at: Date;
+  date: string;
   proof_url: string;
   location: string;
-  created_at: Date;
-
+  
   constructor(
     user_id: string,
     name_bill: string,
@@ -18,6 +22,7 @@ export class CreateTransactionDto {
     amount: number,
     description: string,
     created_at: Date,
+    date: string,
     proof_url?: string,
     location?: string,
   ) {
@@ -28,6 +33,7 @@ export class CreateTransactionDto {
     this.amount = amount;
     this.description = description;
     this.created_at = created_at;
+    this.date =  date;
     if (proof_url) {
       this.proof_url = proof_url;
     }

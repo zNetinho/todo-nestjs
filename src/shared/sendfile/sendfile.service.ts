@@ -5,12 +5,18 @@ import { UpdateSendfileDto } from './dto/update-sendfile.dto';
 
 @Injectable()
 export class SendfileService {
-  constructor() {}
+  private readonly supabase: SupabaseClient;
 
-  private readonly supabase = new SupabaseClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY,
-  );
+  constructor() {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new BadRequestException('Supabase URL or Key is not set');
+    }
+
+    this.supabase = new SupabaseClient(supabaseUrl, supabaseKey);
+  }
   create(createSendfileDto: CreateSendfileDto) {
     return 'This action adds a new sendfile';
   }
@@ -25,14 +31,13 @@ export class SendfileService {
    * @returns {Promise<string | void>} - The URL of the uploaded file if successful, otherwise logs the error.
    */
   async upload(file: Express.Multer.File, bucket: string) {
-    console.log();
     const { data, error } = await this.supabase.storage
       .from(bucket)
       .upload(`${file.originalname}`, file.buffer, {
         upsert: true,
       });
     if (error) {
-      console.log(error);
+      throw new BadRequestException('Não foi possível realizar o upload do arquivo, verifique o erro e tente novamente:', error.message)
     } else {
       const urlFile = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.fullPath}`;
       return urlFile;
