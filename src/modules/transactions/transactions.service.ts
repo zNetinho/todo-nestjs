@@ -95,7 +95,7 @@ export class TransactionsService {
   }
 
   /**
-   * Finds a single transaction by its unique identifier.
+   * Procura uma transação pelo ID.
    * 
    * @param {string} id - The unique identifier of the transaction to find.
    * @returns {Promise<CreateTransactionDto>} A promise that resolves to the found transaction.
