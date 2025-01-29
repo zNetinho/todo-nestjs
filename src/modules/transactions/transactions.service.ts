@@ -59,10 +59,10 @@ export class TransactionsService {
   }
 
   /**
-   * Retrieves all transactions from the database.
+   * Busca todas as transações do banco de dados.
    *
-   * @returns {Promise<CreateTransactionDto[]>} A promise that resolves to an array of CreateTransactionDto objects.
-   * If no transactions are found, an empty array is returned.
+   * @returns {Promise<CreateTransactionDto[]>} Um promesa com um array de createTransactionDTO.
+   * Se não encontrar retorna vazio.
    */
   async findAll({
     where,
