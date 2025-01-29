@@ -1,0 +1,26 @@
+name: Validate Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PR to main comes from development
+        run: |
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+
+          echo "Base branch: $BASE_BRANCH"
+          echo "Head branch: $HEAD_BRANCH"
+
+          if [[ "$BASE_BRANCH" == "main" && "$HEAD_BRANCH" != "development" ]]; then
+            echo "❌ ERROR: Pull Requests to 'main' are only allowed from 'development'."
+            exit 1
+          fi
+
+      - name: Approve PR (if valid)
+        run: echo "✅ Pull request meets branch requirements."
