@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 import { DateFormatter } from 'src/shared/formatters/date.formatter';
@@ -16,6 +16,13 @@ export class Task {
   @ApiProperty()
   objetivo: string;
 
+  @Optional()
+  @ApiProperty()
+  status?: string;
+
+  @ApiHideProperty()
+  responsavelId?: string;
+
   @ApiHideProperty()
   concluido?: boolean;
   @ApiHideProperty()
@@ -31,11 +38,13 @@ export class Task {
    * @param {string} id - id da tarefa.
    * @param {string} nome - Nome da tarefa.
    * @param {string} objetivo - Objetivo da tarefa.
+   * @param {string} status - Status da tarefa.
    */
-  constructor(id: string, nome: string, objetivo: string) {
+  constructor(id: string, nome: string, objetivo: string, status?: string) {
     this.id = id;
     this.nome = nome;
     this.objetivo = objetivo;
+    this.status = status? status : 'BACKLOG';
     this.concluido = false;
     this.criado_em = this.formatterDate.format(new Date());
     this.alterado_em = this.formatterDate.format(new Date());

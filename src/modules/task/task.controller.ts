@@ -20,9 +20,9 @@ import {
 import { ApiCreatedResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Cache } from 'cache-manager';
 import { Response } from 'express';
-import { NotFound } from 'src/exceptions/not_found';
 import { CreateTaskDto } from './dto/task.dto';
 import { TaskService } from './task.service';
+import { Task } from '@prisma/client';
 
 @ApiTags('task')
 @Controller('task')
@@ -61,24 +61,9 @@ export class TaskController {
    * @return {Promise<void>} - A promise that resolves when the task is created successfully,
    * or rejects with an error response if there is an issue.
    */
-  async create(@Body() createTaskDto: CreateTaskDto, @Res() res: Response) {
+  async create(@Body() createTaskDto: CreateTaskDto): Promise<Task> {
     // Call the create method of the task service with the createTaskDto object
-    const task = await this.taskService.create(createTaskDto);
-
-    // If the task is successfully created, send a response back to the client with a status of 201 and a message indicating that the task was created successfully
-    if (task) {
-      return res.status(201).json({
-        message: 'Tarefa criada com sucesso',
-        status: 201,
-        task,
-      });
-    } else {
-      // If there is an error creating the task, send a response back to the client with a status of 500 and an error message
-      return res.status(500).json({
-        message: 'Erro ao criar tarefa',
-        status: 500,
-      });
-    }
+    return this.taskService.create(createTaskDto);
   }
 
   // Apply object cache for route get, using URL as key
@@ -113,7 +98,7 @@ export class TaskController {
   async findOne(@Param('id') id: string) {
     const task = await this.taskService.findOne(+id);
     if (!task) {
-      return new NotFound();
+      return new Error();
     }
     return task;
   }

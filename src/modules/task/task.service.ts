@@ -4,19 +4,13 @@ import { ApiBody } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { Cache } from 'cache-manager';
 import { isBoolean, isNotEmpty, isNumber } from 'class-validator';
-import { ErroBase } from 'src/exceptions/error_base';
-import { NotFound } from 'src/exceptions/not_found';
-import {
-  PaginatedResult,
-  PaginateFunction,
-  paginator,
-  PrismaService,
-} from 'src/prisma/prisma.service'; // Adjust import path as needed
-import { patternNoScript } from 'src/shared/constants/regex_patterns';
-import { DateFormatter } from 'src/shared/formatters/date.formatter';
+
+import { patternNoScript } from '../../shared/constants/regex_patterns';
+import { DateFormatter } from '../../shared/formatters/date.formatter';
 import { CreateTaskDto } from './dto/task.dto';
 import { Task } from './entities/task.entity';
 import { UserService } from '../user/user.service';
+import { PaginatedResult, PaginateFunction, paginator, PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class TaskService {
@@ -190,7 +184,7 @@ export class TaskService {
       });
       return updatedTask;
     } catch (error) {
-      throw new ErroBase();
+      throw new Error();
     }
   }
 
@@ -199,7 +193,7 @@ export class TaskService {
       where: { id },
     });
     if (!task) {
-      return new NotFound();
+      return new Error();
     }
     try {
       const updatedTask = await this.prisma.task.update({
