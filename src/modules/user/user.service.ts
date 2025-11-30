@@ -183,6 +183,9 @@ export class UserService {
 
   async update(id: string, updateUserDto: UpdateUserDto, file?: Express.Multer.File) {
     const user = await this.findOne(id);
+    if (!user) {
+      throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
+    }
     let urlAvatar = null;
     if (file) {
       urlAvatar = await this.updateAvatar(id, file);
@@ -197,9 +200,14 @@ export class UserService {
   }
 
   async remove(id: string) {
-    const userExcluded = await this.prisma.user.delete({
+    const userExcluded = await this.prisma.user.findFirst({
       where: { id: id },
     });
+    if (!userExcluded) {
+      throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
+    }
+
+    await this.prisma.user.delete({ where: { id: userExcluded.id } });
     console.log(userExcluded);
     return `This action removes a #${id} user`;
   }
