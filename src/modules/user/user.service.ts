@@ -39,15 +39,6 @@ export class UserService {
     status: HttpStatus;
     user: { id: string; email: string; avatar: string };
   }> {
-    // Check if all required fields are provided
-    if (!email || !password || !first_name || !last_name) {
-      // If any of the fields are missing, throw an exception
-      throw new HttpException(
-        'Todos os campos são obrigatórios',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     const validateData = UserService.validateData({
       first_name,
       last_name,
@@ -63,6 +54,9 @@ export class UserService {
       const salt = genSaltSync(10);
       // Hash the password using the generated salt
       const hash = hashSync(password, salt);
+
+      let urlAvatar = null;
+      
 
       // Create a new user in the database
       const data = await this.prisma.user.create({
@@ -202,7 +196,11 @@ export class UserService {
      return this.findOne(id);
   }
 
-  remove(id: number) {
+  async remove(id: string) {
+    const userExcluded = await this.prisma.user.delete({
+      where: { id: id },
+    });
+    console.log(userExcluded);
     return `This action removes a #${id} user`;
   }
 }
