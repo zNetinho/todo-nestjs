@@ -17,12 +17,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 export interface PaginatedResult<T> {
   data: T[];
   meta: {
-    total: number;
-    lastPage: number;
-    currentPage: number;
-    perPage: number;
-    prev: number | string;
-    next: number | string;
+    total?: number;
+    lastPage?: number;
+    currentPage?: number;
+    perPage?: number;
+    prev?: number | string;
+    next?: number | string;
   };
 }
 
