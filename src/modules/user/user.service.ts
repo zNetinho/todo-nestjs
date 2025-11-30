@@ -161,8 +161,32 @@ export class UserService {
     return users;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto, file: Express.Multer.File) {
     const user = await this.prisma.user.findUnique({ where: { id } });
+    if (file) {
+          const urlAvatar = await this.uploadConsumer.process({
+            data: {
+              idUser: id,
+              file: file,
+              bucket: 'avatars',
+            },
+          });
+          if (urlAvatar) {
+            try {
+              await this.prisma.user.update({
+                where: {
+                  id: id,
+                },
+                data: {
+                  avatar: urlAvatar,
+                },
+              });
+            } catch (error) {
+              console.log(error);
+            }
+          }
+        }
+    
     if (user === updateUserDto) {
       return user;
     }

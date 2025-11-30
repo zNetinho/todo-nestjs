@@ -55,9 +55,27 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'first_name', maxCount: 1 },
+      { name: 'last_name', maxCount: 1 },
+      { name: 'avatar', maxCount: 1 },
+      { name: 'email', maxCount: 1 },
+      { name: 'password', maxCount: 1 },
+    ]),
+  )
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(id, updateUserDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFiles() files: { avatar?: Express.Multer.File;},) {
+    console.log("Endpoint", updateUserDto)
+    console.log("avatar", files)
+    if (!updateUserDto) {
+      throw new Error('No data provided for update');
+    }
+
+    return this.userService.update(id, updateUserDto, files.avatar[0]);
   }
 
   @Delete(':id')
