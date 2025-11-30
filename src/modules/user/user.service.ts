@@ -1,16 +1,16 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { genSaltSync, hashSync } from 'bcrypt';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { SendMailConsumer } from 'src/queue/job/sendmail-welcome.consumer';
-import { UploadFileConsumer } from 'src/queue/job/uploadfile.consumer';
-import { SendfileService } from 'src/shared/sendfile/sendfile.service';
-import { SupabaseService } from 'src/supabase/supabase.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { SendMailConsumer } from '../../queue/job/sendmail-welcome.consumer';
+import { UploadFileConsumer } from '../../queue/job/uploadfile.consumer';
+import { SendfileService } from '../../shared/sendfile/sendfile.service';
+import { SupabaseService } from '../../supabase/supabase.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { patternEmailIsValid } from 'src/shared/constants/regex_patterns';
+import { patternEmailIsValid } from '../../shared/constants/regex_patterns';
 
 @Injectable()
 export class UserService {
