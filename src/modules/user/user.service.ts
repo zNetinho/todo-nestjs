@@ -141,6 +141,32 @@ export class UserService {
     );
   }
 
+  async updateAvatar(id: string, file: Express.Multer.File) {
+    if (file) {
+      const urlAvatar = await this.uploadConsumer.process({
+        data: {
+          idUser: id,
+          file: file,
+          bucket: 'avatars',
+        },
+      });
+      if (urlAvatar) {
+        try {
+          await this.prisma.user.update({
+            where: {
+              id: id,
+            },
+            data: {
+              avatar: urlAvatar,
+            },
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+  }
+
   async findOne(id: string): Promise<User | undefined> {
     const user = this.prisma.user.findFirst({ where: { id: id } });
     return user;
@@ -161,36 +187,19 @@ export class UserService {
     return users;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto, file: Express.Multer.File) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+  async update(id: string, updateUserDto: UpdateUserDto, file?: Express.Multer.File) {
+    const user = await this.findOne(id);
+    let urlAvatar = null;
     if (file) {
-          const urlAvatar = await this.uploadConsumer.process({
-            data: {
-              idUser: id,
-              file: file,
-              bucket: 'avatars',
-            },
-          });
-          if (urlAvatar) {
-            try {
-              await this.prisma.user.update({
-                where: {
-                  id: id,
-                },
-                data: {
-                  avatar: urlAvatar,
-                },
-              });
-            } catch (error) {
-              console.log(error);
-            }
-          }
-        }
-    
-    if (user === updateUserDto) {
-      return user;
+      urlAvatar = await this.updateAvatar(id, file);
     }
-    return `This action updates a #${user.id} user`;
+    updateUserDto.avatar = urlAvatar || user.avatar;
+    
+    await this.prisma.user.update({
+      where: { id: id },
+      data: updateUserDto,
+    });
+     return this.findOne(id);
   }
 
   remove(id: number) {
