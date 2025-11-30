@@ -1,8 +1,7 @@
 import { OnQueueEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import e from 'express';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { SendfileService } from 'src/shared/sendfile/sendfile.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { SendfileService } from '../../shared/sendfile/sendfile.service';
 
 @Processor('uploadfile-queue')
 class UploadFileConsumer extends WorkerHost {
