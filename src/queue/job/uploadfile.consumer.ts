@@ -1,6 +1,5 @@
 import { OnQueueEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import e from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SendfileService } from 'src/shared/sendfile/sendfile.service';
 
