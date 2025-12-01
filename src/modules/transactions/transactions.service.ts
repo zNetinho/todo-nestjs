@@ -6,10 +6,16 @@ import { Prisma, Transactions } from '@prisma/client';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { DateFormatter } from 'src/shared/formatters/date.formatter';
+import { parse } from 'path';
+import { UploadFileConsumer } from 'src/queue/job/uploadfile.consumer';
 
 @Injectable()
 export class TransactionsService {
-  constructor(@Inject(CACHE_MANAGER) private cacheService: Cache, private readonly prisma: PrismaService) { }
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheService: Cache,
+    private readonly prisma: PrismaService,
+    private readonly uploadConsumer: UploadFileConsumer,
+  ) { }
 
   /**
    * Creates a new transaction.
@@ -18,8 +24,8 @@ export class TransactionsService {
    * @returns {Promise<any>} - A promise that resolves to the created transaction.
    * @throws {Error} - Throws an error if the transaction creation fails.
    */
-  async create(createTransactionDto: CreateTransactionDto) {
-    const {
+  async create(createTransactionDto: CreateTransactionDto, file: Express.Multer.File): Promise<any> {
+    let {
       name_bill,
       amount,
       type_transaction,
@@ -33,18 +39,31 @@ export class TransactionsService {
     } = createTransactionDto;
     this.validateInfo(createTransactionDto);
 
+    if (file) {
+      const urlProof = await this.uploadConsumer.process({
+        data: {
+          idUser: user_id,
+          file: file,
+          bucket: 'cupons',
+        },
+      });
+      proof_url = urlProof;
+    }
+
     const transaction = new CreateTransactionDto(
       user_id,
       name_bill,
       type_transaction,
       category,
-      amount,
+      parseFloat(amount as any),
       description,
       created_at,
       date,
       proof_url,
       location,
     );
+
+    
 
     try {
       return await this.prisma.transactions.create({
@@ -59,7 +78,7 @@ export class TransactionsService {
   }
 
   /**
-   * Busca todas as transações do banco de dados.
+   * Retrieve all transactions on bank.
    *
    * @returns {Promise<CreateTransactionDto[]>} Um promesa com um array de createTransactionDTO.
    * Se não encontrar retorna vazio.
