@@ -18,7 +18,7 @@ async function bootstrap() {
       'https://www.linkedin.com/in/antonio-flavio/',
       'netoflavio97@hotmail.com',
     )
-    // .addBearerAuth()
+    .addBearerAuth()
     .setVersion('1.0')
     .addTag('task')
     .build();

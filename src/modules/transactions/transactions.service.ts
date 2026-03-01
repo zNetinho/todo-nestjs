@@ -1,13 +1,13 @@
+import { Express } from 'express';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, Transactions } from '@prisma/client';
+import { Cache } from 'cache-manager';
+import { PaginatedResult, PaginateFunction, paginator, PrismaService } from 'src/prisma/prisma.service';
+import { UploadFileConsumer } from 'src/queue/job/uploadfile.consumer';
+import { DateFormatter } from 'src/shared/formatters/date.formatter';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { paginator, PrismaService, PaginateFunction, PaginatedResult } from 'src/prisma/prisma.service';
-import { Prisma, Transactions } from '@prisma/client';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
-import { DateFormatter } from 'src/shared/formatters/date.formatter';
-import { parse } from 'path';
-import { UploadFileConsumer } from 'src/queue/job/uploadfile.consumer';
 
 @Injectable()
 export class TransactionsService {
@@ -25,6 +25,7 @@ export class TransactionsService {
    * @throws {Error} - Throws an error if the transaction creation fails.
    */
   async create(createTransactionDto: CreateTransactionDto, file: Express.Multer.File): Promise<any> {
+
     let {
       name_bill,
       amount,
@@ -39,15 +40,19 @@ export class TransactionsService {
     } = createTransactionDto;
     this.validateInfo(createTransactionDto);
 
-    if (file) {
-      const urlProof = await this.uploadConsumer.process({
-        data: {
-          idUser: user_id,
-          file: file,
-          bucket: 'cupons',
-        },
-      });
-      proof_url = urlProof;
+    if (file && file.buffer) {
+      if (typeof file === 'undefined' || file === null) { 
+        proof_url = file.toString();
+      } else {
+        const urlProof = await this.uploadConsumer.process({
+          data: {
+            idUser: user_id,
+            file: file,
+            bucket: 'cupons',
+          },
+        });
+        proof_url = urlProof;
+      }
     }
 
     const transaction = new CreateTransactionDto(
@@ -72,7 +77,7 @@ export class TransactionsService {
           date: DateFormatter.format(new Date(createTransactionDto.date)),
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       throw new BadRequestException(`Failed to create task: ${error.message}`);
     }
   }
@@ -148,7 +153,7 @@ export class TransactionsService {
           date: DateFormatter.format(new Date(updateTransactionDto.date))
         }
       })
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to update task: ${error.message}`);
     }
   }
@@ -215,7 +220,7 @@ export class TransactionsService {
         'Description is required, must be a string and high than 3 characters',
       );
     }
-    if (typeof amount !== 'number' || amount <= 0) {
+    if (typeof Number(amount) !== 'number' || Number(amount) <= 0) {
       throw new BadRequestException(
         'Amount is required and must be a positive number',
       );
